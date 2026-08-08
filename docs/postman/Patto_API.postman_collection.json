@@ -1,0 +1,1031 @@
+{
+  "info": {
+    "_postman_id": "66fe0429-b824-4b1f-a6e6-90266df72fd5",
+    "name": "Patto API - Manual Test Collection",
+    "description": "Manual API test collection for the Patto Django backend. Start with Health, request OTP for User 1 and User 2, paste OTPs into collection variables, then run the flows in order. Export data before account deletion. Account deletion/disconnection removes the previous couple's shared data; remaining-partner reconnect requests should be run only after the deletion job has processed.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.upsert({ key: 'Content-Type', value: 'application/json' });"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api/v1" },
+    { "key": "user_email", "value": "partner1@example.com" },
+    { "key": "partner_email", "value": "partner2@example.com" },
+    { "key": "new_partner_email", "value": "new-partner@example.com" },
+    { "key": "otp_code", "value": "" },
+    { "key": "partner_otp_code", "value": "" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" },
+    { "key": "partner_access_token", "value": "" },
+    { "key": "partner_refresh_token", "value": "" },
+    { "key": "current_couple_id", "value": "" },
+    { "key": "invitation_id", "value": "" },
+    { "key": "invitation_token", "value": "" },
+    { "key": "invite_url", "value": "" },
+    { "key": "referral_code", "value": "" },
+    { "key": "topic_slug", "value": "money" },
+    { "key": "topic_session_id", "value": "" },
+    { "key": "discussion_thread_id", "value": "" },
+    { "key": "pact_id", "value": "" },
+    { "key": "pact_version_id", "value": "" },
+    { "key": "clause_proposal_id", "value": "" },
+    { "key": "coach_conversation_id", "value": "" },
+    { "key": "coach_message_id", "value": "" },
+    { "key": "conflict_thread_id", "value": "" },
+    { "key": "moment_id", "value": "" },
+    { "key": "moment_media_id", "value": "" },
+    { "key": "support_ticket_id", "value": "" },
+    { "key": "notification_id", "value": "" },
+    { "key": "device_id", "value": "" },
+    { "key": "challenge_assignment_id", "value": "" },
+    { "key": "daily_assignment_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "00 - Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/health/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - Auth",
+      "item": [
+        {
+          "name": "User 1 - Request Login OTP",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"purpose\": \"login\"\n}"
+            },
+            "url": "{{base_url}}/auth/otp/request/"
+          }
+        },
+        {
+          "name": "User 1 - Verify OTP and Save Tokens",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.tokens) {",
+                  "  pm.collectionVariables.set('access_token', json.tokens.access_token);",
+                  "  pm.collectionVariables.set('refresh_token', json.tokens.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"purpose\": \"login\",\n  \"code\": \"{{otp_code}}\"\n}"
+            },
+            "url": "{{base_url}}/auth/otp/verify/"
+          }
+        },
+        {
+          "name": "User 2 - Request Login OTP",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{partner_email}}\",\n  \"purpose\": \"login\"\n}"
+            },
+            "url": "{{base_url}}/auth/otp/request/"
+          }
+        },
+        {
+          "name": "User 2 - Verify OTP and Save Tokens",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.tokens) {",
+                  "  pm.collectionVariables.set('partner_access_token', json.tokens.access_token);",
+                  "  pm.collectionVariables.set('partner_refresh_token', json.tokens.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{partner_email}}\",\n  \"purpose\": \"login\",\n  \"code\": \"{{partner_otp_code}}\"\n}"
+            },
+            "url": "{{base_url}}/auth/otp/verify/"
+          }
+        },
+        {
+          "name": "User 1 - Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/me/"
+          }
+        },
+        {
+          "name": "User 1 - Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"display_name\": \"Partner One\",\n  \"pronouns\": \"they/them\",\n  \"preferred_language\": \"en\",\n  \"timezone\": \"Asia/Dhaka\"\n}"
+            },
+            "url": "{{base_url}}/me/"
+          }
+        },
+        {
+          "name": "User 1 - Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.access_token) pm.collectionVariables.set('access_token', json.access_token);",
+                  "if (json.refresh_token) pm.collectionVariables.set('refresh_token', json.refresh_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+            },
+            "url": "{{base_url}}/auth/token/refresh/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Couple and Partner Invitation",
+      "item": [
+        {
+          "name": "User 1 - Create Couple",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('current_couple_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/couples/"
+          }
+        },
+        {
+          "name": "User 1 - Current Couple",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/couples/current/"
+          }
+        },
+        {
+          "name": "User 1 - Create Partner Invitation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.invitation) pm.collectionVariables.set('invitation_id', json.invitation.id);",
+                  "if (json.token) pm.collectionVariables.set('invitation_token', json.token);",
+                  "if (json.invite_url) pm.collectionVariables.set('invite_url', json.invite_url);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{partner_email}}\"\n}"
+            },
+            "url": "{{base_url}}/couples/{{current_couple_id}}/invitations/"
+          }
+        },
+        {
+          "name": "User 2 - Accept Partner Invitation",
+          "auth": {
+            "type": "bearer",
+            "bearer": [
+              { "key": "token", "value": "{{partner_access_token}}", "type": "string" }
+            ]
+          },
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{invitation_token}}\"\n}"
+            },
+            "url": "{{base_url}}/couples/invitations/accept/"
+          }
+        },
+        {
+          "name": "User 1 - Revoke Invitation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/couples/invitations/{{invitation_id}}/revoke/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Billing and Entitlement",
+      "item": [
+        {
+          "name": "User 1 - Verify Development IAP",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"platform\": \"apple\",\n  \"receipt\": {\n    \"event_id\": \"manual-dev-event-1\",\n    \"event_type\": \"development_active\",\n    \"product_id\": \"patto.monthly\",\n    \"original_transaction_id\": \"manual-original-1\",\n    \"latest_transaction_id\": \"manual-latest-1\",\n    \"starts_at\": \"2026-08-01T00:00:00Z\",\n    \"expires_at\": \"2026-09-01T00:00:00Z\",\n    \"app_account_token\": \"manual-app-account-token-1\"\n  }\n}"
+            },
+            "url": "{{base_url}}/billing/iap/development/verify/"
+          }
+        },
+        {
+          "name": "User 1 - Current Entitlement",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/billing/entitlement/current/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Referrals",
+      "item": [
+        {
+          "name": "User 1 - Get Referral Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.code) pm.collectionVariables.set('referral_code', json.code);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/referrals/code/"
+          }
+        },
+        {
+          "name": "User 2 - Apply Referral Code",
+          "auth": {
+            "type": "bearer",
+            "bearer": [
+              { "key": "token", "value": "{{partner_access_token}}", "type": "string" }
+            ]
+          },
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{referral_code}}\"\n}"
+            },
+            "url": "{{base_url}}/referrals/apply/"
+          }
+        },
+        {
+          "name": "User 1 - List Referrals",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/referrals/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Topics and Private Responses",
+      "item": [
+        {
+          "name": "List Built-in Topics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/topics/"
+          }
+        },
+        {
+          "name": "Topic Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/topics/{{topic_slug}}/"
+          }
+        },
+        {
+          "name": "Create Topic Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('topic_session_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic_kind\": \"built_in\",\n  \"topic_stable_key\": \"money\",\n  \"topic_version\": 1\n}"
+            },
+            "url": "{{base_url}}/topic-sessions/"
+          }
+        },
+        {
+          "name": "Get Topic Session",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/topic-sessions/{{topic_session_id}}/"
+          }
+        },
+        {
+          "name": "Save Topic Answers",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\n    {\n      \"question_id\": \"REPLACE_WITH_QUESTION_ID_FROM_TOPIC_DETAIL\",\n      \"selected_option_id\": \"REPLACE_WITH_OPTION_ID_OR_REMOVE\",\n      \"text_answer\": \"Manual test answer.\"\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/topic-sessions/{{topic_session_id}}/answers/"
+          }
+        },
+        {
+          "name": "Complete Topic",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\n    {\n      \"question_id\": \"REPLACE_WITH_QUESTION_ID_FROM_TOPIC_DETAIL\",\n      \"selected_option_id\": \"REPLACE_WITH_OPTION_ID_OR_REMOVE\",\n      \"text_answer\": \"Manual test answer.\"\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/topic-sessions/{{topic_session_id}}/complete/"
+          }
+        },
+        {
+          "name": "Run Topic Follow-up",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/topic-sessions/{{topic_session_id}}/follow-up/"
+          }
+        },
+        {
+          "name": "Run Topic Analysis",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/topic-sessions/{{topic_session_id}}/analysis/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Coach",
+      "item": [
+        {
+          "name": "Create Individual Coach Conversation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('coach_conversation_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scope\": \"individual\",\n  \"title\": \"My private Coach chat\"\n}"
+            },
+            "url": "{{base_url}}/coach/conversations/"
+          }
+        },
+        {
+          "name": "Create Couple Chat Conversation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scope\": \"couple\",\n  \"title\": \"Partner chat - no AI\"\n}"
+            },
+            "url": "{{base_url}}/coach/conversations/"
+          }
+        },
+        {
+          "name": "Add Coach Message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('coach_message_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"I want help understanding my expectations in this relationship.\"\n}"
+            },
+            "url": "{{base_url}}/coach/conversations/{{coach_conversation_id}}/messages/"
+          }
+        },
+        {
+          "name": "Run Individual Coach AI",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/coach/conversations/{{coach_conversation_id}}/run/"
+          }
+        },
+        {
+          "name": "Share Individual Coach Message With Partner",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/coach/messages/{{coach_message_id}}/share/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Conflict Mode",
+      "item": [
+        {
+          "name": "Create Conflict Thread",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('conflict_thread_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Household responsibilities\"\n}"
+            },
+            "url": "{{base_url}}/conflicts/"
+          }
+        },
+        {
+          "name": "Submit Private Conflict Perspective",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"situation\": \"I feel we are not aligned on chores.\",\n  \"feelings\": \"I feel overwhelmed.\",\n  \"needs\": \"I need clearer agreements.\",\n  \"requested_outcome\": \"Create a weekly plan.\",\n  \"lock\": true\n}"
+            },
+            "url": "{{base_url}}/conflicts/{{conflict_thread_id}}/perspective/"
+          }
+        },
+        {
+          "name": "Run Conflict Bridge AI",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/conflicts/{{conflict_thread_id}}/bridge/"
+          }
+        },
+        {
+          "name": "Add Conflict Shared Message",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Can we discuss one small agreement for this week?\"\n}"
+            },
+            "url": "{{base_url}}/conflicts/{{conflict_thread_id}}/messages/"
+          }
+        },
+        {
+          "name": "Request Conflict Mediation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Help us find a calm next step.\"\n}"
+            },
+            "url": "{{base_url}}/conflicts/{{conflict_thread_id}}/mediations/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Moments",
+      "item": [
+        {
+          "name": "Create Moment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('moment_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"First manual test moment\",\n  \"body\": \"A nice memory to save.\",\n  \"occurred_on\": \"2026-08-08\",\n  \"topic_ids\": [],\n  \"custom_topic_ids\": []\n}"
+            },
+            "url": "{{base_url}}/moments/"
+          }
+        },
+        {
+          "name": "List Moments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/moments/"
+          }
+        },
+        {
+          "name": "Moment Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/moments/{{moment_id}}/"
+          }
+        },
+        {
+          "name": "Upload Moment Media",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [] }
+              ]
+            },
+            "url": "{{base_url}}/moments/{{moment_id}}/media/"
+          }
+        },
+        {
+          "name": "Create Moment Media Download Link",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/moment-media/{{moment_media_id}}/download-link/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - Discussions and Pacts",
+      "item": [
+        {
+          "name": "Create Discussion Thread",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('discussion_thread_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Manual discussion\",\n  \"session_id\": \"{{topic_session_id}}\"\n}"
+            },
+            "url": "{{base_url}}/discussion-threads/"
+          }
+        },
+        {
+          "name": "Add Discussion Message",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"This is a shared partner-to-partner message.\"\n}"
+            },
+            "url": "{{base_url}}/discussion-threads/{{discussion_thread_id}}/messages/"
+          }
+        },
+        {
+          "name": "Create Pact",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('pact_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Household pact\"\n}"
+            },
+            "url": "{{base_url}}/pacts/"
+          }
+        },
+        {
+          "name": "Propose Pact Version",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('pact_version_id', json.id);",
+                  "if (json.sections && json.sections[0] && json.sections[0].clauses && json.sections[0].clauses[0]) {",
+                  "  pm.collectionVariables.set('clause_proposal_id', json.sections[0].clauses[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sections\": [\n    {\n      \"title\": \"Weekly plan\",\n      \"sort_order\": 1,\n      \"clauses\": [\n        {\n          \"text\": \"We will review chores every Sunday evening.\",\n          \"sort_order\": 1\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/pacts/{{pact_id}}/propose/"
+          }
+        },
+        {
+          "name": "Approve Clause Proposal",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/clause-proposals/{{clause_proposal_id}}/approve/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - Notifications, Daily, Challenges",
+      "item": [
+        {
+          "name": "Register Device",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('device_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"platform\": \"web\",\n  \"token\": \"manual-device-token-1\",\n  \"name\": \"Postman\"\n}"
+            },
+            "url": "{{base_url}}/devices/"
+          }
+        },
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/notifications/"
+          }
+        },
+        {
+          "name": "Set Notification Preference",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"analysis_ready\",\n  \"enabled\": true\n}"
+            },
+            "url": "{{base_url}}/notification-preferences/"
+          }
+        },
+        {
+          "name": "Current Daily",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('daily_assignment_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/daily/current/"
+          }
+        },
+        {
+          "name": "Submit Daily Answer",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text_answer\": \"Today I appreciated your patience.\"\n}"
+            },
+            "url": "{{base_url}}/daily/{{daily_assignment_id}}/answers/"
+          }
+        },
+        {
+          "name": "Challenge Catalog",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/challenges/"
+          }
+        },
+        {
+          "name": "Create Challenge Assignment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('challenge_assignment_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challenge_id\": \"REPLACE_WITH_CHALLENGE_ID_FROM_CATALOG\"\n}"
+            },
+            "url": "{{base_url}}/challenge-assignments/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 - Support and Privacy Requests",
+      "item": [
+        {
+          "name": "Create Support Ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('support_ticket_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"technical\",\n  \"subject\": \"Manual test ticket\",\n  \"body\": \"Testing support ticket creation.\"\n}"
+            },
+            "url": "{{base_url}}/support-tickets/"
+          }
+        },
+        {
+          "name": "Add Support Ticket Message",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Adding more manual context.\"\n}"
+            },
+            "url": "{{base_url}}/support-tickets/{{support_ticket_id}}/messages/"
+          }
+        },
+        {
+          "name": "Subscription Management",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/subscription-management/"
+          }
+        },
+        {
+          "name": "Create Data Export Request - Run Before Deletion",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/data-export-requests/"
+          }
+        },
+        {
+          "name": "List Data Export Requests - Confirm Before Deletion",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/data-export-requests/"
+          }
+        },
+        {
+          "name": "Create Account Deletion Request - Deletes Old Couple Data When Processed",
+          "description": "This creates the deletion request. When the backend deletion job processes it, User 1 sessions are revoked, User 1 is anonymized/deactivated, the old couple and shared couple data are deleted, and User 2 can create a new couple. Export first; stored export payloads are cleared during deletion processing.",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Manual test only.\",\n  \"confirmation_email\": \"{{user_email}}\"\n}"
+            },
+            "url": "{{base_url}}/account-deletion-requests/"
+          }
+        },
+        {
+          "name": "User 2 - Create New Couple After Deletion Job",
+          "description": "Run this only after User 1's account deletion request has been processed by the backend deletion job. It proves the remaining partner is no longer connected to the previous partner.",
+          "auth": {
+            "type": "bearer",
+            "bearer": [
+              { "key": "token", "value": "{{partner_access_token}}", "type": "string" }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('current_couple_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/couples/"
+          }
+        },
+        {
+          "name": "User 2 - Invite New Partner After Deletion Job",
+          "description": "Run after User 2 creates a fresh couple. This uses the same partner invitation URL process for the new partner.",
+          "auth": {
+            "type": "bearer",
+            "bearer": [
+              { "key": "token", "value": "{{partner_access_token}}", "type": "string" }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.invitation) pm.collectionVariables.set('invitation_id', json.invitation.id);",
+                  "if (json.token) pm.collectionVariables.set('invitation_token', json.token);",
+                  "if (json.invite_url) pm.collectionVariables.set('invite_url', json.invite_url);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{new_partner_email}}\"\n}"
+            },
+            "url": "{{base_url}}/couples/{{current_couple_id}}/invitations/"
+          }
+        }
+      ]
+    }
+  ]
+}

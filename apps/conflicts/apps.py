@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class ConflictsConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.conflicts"
+    verbose_name = "Conflict Mode"
